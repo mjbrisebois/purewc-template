@@ -3,17 +3,16 @@ export class HTMLElementTemplate extends HTMLElement {
     constructor () {
 	super();
 
-	const observer			= new MutationObserver( () => {
+	const child_observer			= new MutationObserver( () => {
 	    this.mutationCallback && this.mutationCallback();
 	});
-	observer.observe( this, {
-	    "characterData": false,
+	child_observer.observe( this, {
 	    "childList": true,
-	    "attributes": false,
+	    "subtree": true,
 	});
 
 	if ( this.constructor.template === undefined )
-	    throw new Error(`Missing template for ${this.constructor.name}`);
+	    throw new TypeError(`Missing template for ${this.constructor.name}`);
 
 	let template			 	= this.constructor.template;
 	this.constructor.$template		= document.createElement("template");
@@ -31,8 +30,16 @@ export class HTMLElementTemplate extends HTMLElement {
 
 	const $this				= this;
 	const __props_store			= {};
-	Object.defineProperty( this, "__props", {
-	    "value": {},
+	const __props				= {};
+
+	const attr_observer			= new MutationObserver( (mutationList) => {
+	    for ( let mutation of mutationList ) {
+		const name			= mutation.attributeName;
+		__props[ name ]			= this.getAttribute( name );
+	    }
+	});
+	attr_observer.observe( this, {
+	    "attributes": true,
 	});
 
 	Object.entries( this.constructor.refs ).forEach( ([key, selector]) => {
@@ -49,25 +56,32 @@ export class HTMLElementTemplate extends HTMLElement {
 	this.constructor.observedAttributes.push( ...Object.keys( this.constructor.properties ) );
 
 	Object.entries( this.constructor.properties ).forEach( ([key, config]) => {
-	    Object.defineProperty( this.__props, key, {
+	    Object.defineProperty( __props, key, {
 		get () {
 		    return __props_store[ key ] || config.default;
 		},
 		set ( value ) {
+		    const before		= __props_store[ key ];
 		    __props_store[ key ]	= value;
 
-		    if ( config.updated ) {
-			config.updated.call( $this );
-		    }
+		    if ( before !== value && config.updateDOM )
+			config.updateDOM.call( $this, before, before !== value );
 		},
 	    });
 
 	    Object.defineProperty( this, key, {
 		get () {
-		    return this.__props[ key ];
+		    return __props[ key ];
 		},
 		set ( value ) {
-		    this.__props[ key ]		= value;
+		    const before		= __props[ key ];
+		    __props[ key ]		= config.set
+			? config.set.call( $this, value ) || value
+			: value;
+		    const after			= __props[ key ];
+
+		    if ( before === after )
+			return;
 
 		    if ( config.reflect !== false )
 			this.setAttribute( key, value );
