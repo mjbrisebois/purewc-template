@@ -14,6 +14,9 @@ export default {
     "entry":	"./src/index.js",
     "output": {
 	"filename": `${FILENAME}.${FILEEXT}`,
+	"library": {
+	    "type": "window",
+	},
     },
     "optimization": {
 	"minimizer": [
