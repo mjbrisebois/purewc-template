@@ -10,7 +10,7 @@ should only be to
 1. Shadow DOM initialization with simple HTML/CSS definition
 2. Intuitive causation model to keep attributes and properties in sync
 3. Element reference hooks
-4. Slot mutation callback
+4. Slot tracking and mutation callback
 
 
 ### Planned Features

@@ -1,9 +1,14 @@
 
 export class HTMLElementTemplate extends HTMLElement {
+    slots = {};
+
     constructor () {
 	super();
 
 	const child_observer			= new MutationObserver( () => {
+	    for ( let $el of this.querySelectorAll("[slot]") )
+		this.slots[ $el.slot ]		= $el;
+
 	    this.mutationCallback && this.mutationCallback();
 	});
 	child_observer.observe( this, {
@@ -53,7 +58,11 @@ export class HTMLElementTemplate extends HTMLElement {
 	    });
 	});
 
-	this.constructor.observedAttributes.push( ...Object.keys( this.constructor.properties ) );
+	for ( let $el of this.shadowRoot.querySelectorAll("slot") ) {
+	    const name			= $el.getAttribute("name");
+	    if ( name )
+		this.slots[ name ]	= null;
+	}
 
 	Object.entries( this.constructor.properties ).forEach( ([key, config]) => {
 	    Object.defineProperty( __props, key, {
