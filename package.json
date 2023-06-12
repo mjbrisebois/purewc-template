@@ -1,6 +1,6 @@
 {
   "name": "@purewc/template",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "An ultra-light base class for writing vanilla Web Components",
   "main": "src/index.js",
   "type": "module",
